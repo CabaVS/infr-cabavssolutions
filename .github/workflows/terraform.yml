@@ -41,6 +41,13 @@ jobs:
             -backend-config="container_name=${{ secrets.TF_BACKEND_CONTAINER }}" \
             -backend-config="key=${{ secrets.TF_BACKEND_KEY }}"
 
+      - name: Export TF_VAR_* environment variables
+        run: |
+          echo "TF_VAR_resource_group_name=${{ secrets.TF_VAR_resource_group_name }}" >> $GITHUB_ENV
+          echo "TF_VAR_sql_admin_group_display_name=${{ secrets.TF_VAR_sql_admin_group_display_name }}" >> $GITHUB_ENV
+          echo "TF_VAR_sql_admin_group_object_id=${{ secrets.TF_VAR_sql_admin_group_object_id }}" >> $GITHUB_ENV
+          echo "TF_VAR_sql_admin_group_tenant_id=${{ secrets.TF_VAR_sql_admin_group_tenant_id }}" >> $GITHUB_ENV      
+
       - name: Terraform Plan
         run: terraform plan -input=false
 
