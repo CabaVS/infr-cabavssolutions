@@ -43,7 +43,7 @@ resource "azurerm_linux_web_app" "webapp_expensetrackerapi" {
   webdeploy_publish_basic_authentication_enabled = false
 
   site_config {
-    always_on = true
+    always_on = false
   }
 }
 
