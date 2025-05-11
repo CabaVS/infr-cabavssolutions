@@ -24,26 +24,49 @@ data "azurerm_resource_group" "existing" {
   name = var.resource_group_name
 }
 
-resource "azurerm_service_plan" "asp" {
-  name                = "asp-cabavssolutions"
-  resource_group_name = data.azurerm_resource_group.existing.name
+resource "azurerm_log_analytics_workspace" "law" {
+  name                = "log-cabavssolutions"
   location            = data.azurerm_resource_group.existing.location
-  os_type             = "Linux"
-  sku_name            = "B1"
+  resource_group_name = data.azurerm_resource_group.existing.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
 }
 
-resource "azurerm_linux_web_app" "webapp_expensetrackerapi" {
-  name                = "app-expensetrackerapi"
-  resource_group_name = data.azurerm_resource_group.existing.name
-  location            = azurerm_service_plan.asp.location
-  service_plan_id     = azurerm_service_plan.asp.id
+resource "azurerm_container_app_environment" "ace" {
+  name                       = "ace-cabavssolutions"
+  location                   = data.azurerm_resource_group.existing.location
+  resource_group_name        = data.azurerm_resource_group.existing.name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
+}
 
-  ftp_publish_basic_authentication_enabled       = false
-  https_only                                     = true
-  webdeploy_publish_basic_authentication_enabled = false
+resource "azurerm_container_app" "aca_expensetrackerapi" {
+  name                         = "aca-expensetrackerapi"
+  container_app_environment_id = azurerm_container_app_environment.ace.id
+  resource_group_name          = data.azurerm_resource_group.existing.name
+  revision_mode                = "Single"
 
-  site_config {
-    always_on = false
+  template {
+    min_replicas = 0
+    max_replicas = 1
+
+    container {
+      name   = "expensetrackerapi"
+      image  = "mcr.microsoft.com/dotnet/samples:aspnetapp"
+      cpu    = 0.25
+      memory = "0.5Gi"
+    }
+  }
+
+  ingress {
+    traffic_weight {
+      percentage      = 100
+      label           = "primary"
+      latest_revision = true
+    }
+
+    external_enabled = true
+    target_port      = 8080
+    transport        = "auto"
   }
 }
 
@@ -62,10 +85,18 @@ resource "azurerm_mssql_server" "mssql_server" {
 }
 
 resource "azurerm_mssql_database" "db_expensetracker" {
-  name        = "sqldb-expensetracker"
-  server_id   = azurerm_mssql_server.mssql_server.id
-  max_size_gb = 2
-  sku_name    = "Basic"
+  name      = "sqldb-expensetracker"
+  server_id = azurerm_mssql_server.mssql_server.id
+
+  sku_name             = "GP_S_Gen5_1"
+  storage_account_type = "Local"
+
+  auto_pause_delay_in_minutes = 15
+  max_size_gb                 = 2
+  min_capacity                = 0.5
+  read_replica_count          = 0
+  read_scale                  = false
+  zone_redundant              = false
 
   lifecycle {
     prevent_destroy = true
