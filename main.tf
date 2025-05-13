@@ -102,3 +102,11 @@ resource "azurerm_mssql_database" "db_expensetracker" {
     prevent_destroy = true
   }
 }
+
+resource "azurerm_container_registry" "acr" {
+  name                = "crcabavssolutions"
+  resource_group_name = data.azurerm_resource_group.existing.name
+  location            = data.azurerm_resource_group.existing.location
+  sku                 = "Standard"
+  admin_enabled       = false
+}
