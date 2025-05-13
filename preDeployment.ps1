@@ -6,7 +6,8 @@ param (
   [Parameter(Mandatory = $true)][string]$containerName,
   [Parameter(Mandatory = $true)][string]$githubSpName,
   [Parameter(Mandatory = $true)][string]$githubRepo,
-  [Parameter(Mandatory = $true)][string]$mainBranch
+  [Parameter(Mandatory = $true)][string]$mainBranch,
+  [Parameter(Mandatory = $true)][string]$githubEnvName
 )
 
 $tenantId = az account show --query tenantId -o tsv
@@ -119,6 +120,22 @@ $tempFile = New-TemporaryFile
   "name": "github-oidc",
   "issuer": "https://token.actions.githubusercontent.com",
   "subject": "repo:$($githubRepo):ref:refs/heads/$($mainBranch)",
+  "audiences": ["api://AzureADTokenExchange"]
+}
+"@ | Out-File -Encoding utf8 -FilePath $tempFile.FullName
+
+az ad app federated-credential create `
+  --id $appObjectId `
+  --parameters "@$($tempFile.FullName)"
+
+Remove-Item $tempFile.FullName -Force
+
+$tempFile = New-TemporaryFile
+@"
+{
+  "name": "github-oidc-for-environment",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:$($githubRepo):environment:$($githubEnvName)",
   "audiences": ["api://AzureADTokenExchange"]
 }
 "@ | Out-File -Encoding utf8 -FilePath $tempFile.FullName
