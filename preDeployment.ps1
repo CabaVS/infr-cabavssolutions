@@ -27,6 +27,7 @@ else {
   Write-Host "Resource Group is created"
 }
 
+# Create Storage Account
 Write-Host "Creating Storage Account $storageAccountName..."
 az storage account create `
   --name $storageAccountName `
