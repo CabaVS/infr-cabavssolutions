@@ -45,6 +45,22 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
   resource_group_name          = data.azurerm_resource_group.existing.name
   revision_mode                = "Single"
 
+  identity {
+    type = "SystemAssigned"
+  }
+
+  ingress {
+    external_enabled = true
+    target_port      = 8080
+    transport        = "auto"
+
+    traffic_weight {
+      percentage      = 100
+      label           = "primary"
+      latest_revision = true
+    }
+  }
+
   template {
     min_replicas = 0
     max_replicas = 1
@@ -55,18 +71,6 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
       cpu    = 0.25
       memory = "0.5Gi"
     }
-  }
-
-  ingress {
-    traffic_weight {
-      percentage      = 100
-      label           = "primary"
-      latest_revision = true
-    }
-
-    external_enabled = true
-    target_port      = 8080
-    transport        = "auto"
   }
 }
 
@@ -109,4 +113,10 @@ resource "azurerm_container_registry" "acr" {
   location            = data.azurerm_resource_group.existing.location
   sku                 = "Basic"
   admin_enabled       = false
+}
+
+resource "azurerm_role_assignment" "acr_pull_for_aca" {
+  scope                = azurerm_container_registry.acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_container_app.aca_expensetrackerapi.identity[0].principal_id
 }
