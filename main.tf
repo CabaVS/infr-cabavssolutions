@@ -15,6 +15,7 @@ provider "azurerm" {
   features {}
 }
 
+variable "expensetrackerapi_image_name" {}
 variable "resource_group_name" {}
 variable "sql_admin_group_display_name" {}
 variable "sql_admin_group_object_id" {}
@@ -67,7 +68,7 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
 
     container {
       name   = "expensetrackerapi"
-      image  = "mcr.microsoft.com/dotnet/samples:aspnetapp"
+      image  = "${azurerm_container_registry.acr.login_server}/${var.expensetrackerapi_image_name}:latest"
       cpu    = 0.25
       memory = "0.5Gi"
     }
@@ -115,8 +116,17 @@ resource "azurerm_container_registry" "acr" {
   admin_enabled       = false
 }
 
+data "azurerm_container_app" "aca_identity" {
+  name                = azurerm_container_app.aca_expensetrackerapi.name
+  resource_group_name = azurerm_container_app.aca_expensetrackerapi.resource_group_name
+
+  depends_on = [
+    azurerm_container_app.aca_expensetrackerapi
+  ]
+}
+
 resource "azurerm_role_assignment" "acr_pull_for_aca" {
   scope                = azurerm_container_registry.acr.id
   role_definition_name = "AcrPull"
-  principal_id         = azurerm_container_app.aca_expensetrackerapi.identity[0].principal_id
+  principal_id         = data.azurerm_container_app.aca_identity.identity[0].principal_id
 }

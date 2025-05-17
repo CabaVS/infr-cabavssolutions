@@ -51,6 +51,7 @@ jobs:
 
       - name: Export TF_VAR_* environment variables
         run: |
+          echo "TF_VAR_expensetrackerapi_image_name=${{ secrets.TF_VAR_expensetrackerapi_image_name }}" >> $GITHUB_ENV
           echo "TF_VAR_resource_group_name=${{ secrets.TF_VAR_resource_group_name }}" >> $GITHUB_ENV
           echo "TF_VAR_sql_admin_group_display_name=${{ secrets.TF_VAR_sql_admin_group_display_name }}" >> $GITHUB_ENV
           echo "TF_VAR_sql_admin_group_object_id=${{ secrets.TF_VAR_sql_admin_group_object_id }}" >> $GITHUB_ENV
