@@ -16,14 +16,23 @@ provider "azurerm" {
 }
 
 variable "resource_group_name" {}
+variable "storage_account_name" {}
 variable "sql_admin_group_display_name" {}
 variable "sql_admin_group_object_id" {}
 variable "sql_admin_group_tenant_id" {}
 
+# Existing Resource Group
 data "azurerm_resource_group" "existing" {
   name = var.resource_group_name
 }
 
+# Existing Storage Account
+data "azurerm_storage_account" "existing" {
+  name                = var.storage_account_name
+  resource_group_name = var.resource_group_name
+}
+
+# Log Analytics Workspace
 resource "azurerm_log_analytics_workspace" "law" {
   name                = "log-cabavssolutions"
   location            = data.azurerm_resource_group.existing.location
@@ -32,6 +41,7 @@ resource "azurerm_log_analytics_workspace" "law" {
   retention_in_days   = 30
 }
 
+# Container App Environment
 resource "azurerm_container_app_environment" "ace" {
   name                       = "ace-cabavssolutions"
   location                   = data.azurerm_resource_group.existing.location
@@ -39,6 +49,7 @@ resource "azurerm_container_app_environment" "ace" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
 }
 
+# Container App for Expense Tracker API
 resource "azurerm_container_app" "aca_expensetrackerapi" {
   name                         = "aca-expensetrackerapi"
   container_app_environment_id = azurerm_container_app_environment.ace.id
@@ -47,7 +58,7 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
 
   identity {
     type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.uai-acr-pull.id]
+    identity_ids = [azurerm_user_assigned_identity.uai_acr_pull.id, azurerm_user_assigned_identity.sa_blob_reader.id]
   }
 
   ingress {
@@ -70,7 +81,7 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
 
   registry {
     server   = azurerm_container_registry.acr.login_server
-    identity = azurerm_user_assigned_identity.uai-acr-pull.id
+    identity = azurerm_user_assigned_identity.uai_acr_pull.id
   }
 
   template {
@@ -86,12 +97,7 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
   }
 }
 
-resource "azurerm_user_assigned_identity" "uai-acr-pull" {
-  name                = "uai-acr-pull"
-  resource_group_name = data.azurerm_resource_group.existing.name
-  location            = data.azurerm_resource_group.existing.location
-}
-
+# SQL Server
 resource "azurerm_mssql_server" "mssql_server" {
   name                = "sql-cabavssolutions"
   resource_group_name = data.azurerm_resource_group.existing.name
@@ -106,6 +112,7 @@ resource "azurerm_mssql_server" "mssql_server" {
   }
 }
 
+# SQL Database for Expense Tracker API
 resource "azurerm_mssql_database" "db_expensetracker" {
   name      = "sqldb-expensetracker"
   server_id = azurerm_mssql_server.mssql_server.id
@@ -125,6 +132,7 @@ resource "azurerm_mssql_database" "db_expensetracker" {
   }
 }
 
+# Azure Container Registry
 resource "azurerm_container_registry" "acr" {
   name                = "crcabavssolutions"
   resource_group_name = data.azurerm_resource_group.existing.name
@@ -133,8 +141,28 @@ resource "azurerm_container_registry" "acr" {
   admin_enabled       = false
 }
 
-resource "azurerm_role_assignment" "acr_pull_for_aca_expensetrackerapi" {
+# User-Assigned Managed Identity
+resource "azurerm_user_assigned_identity" "uai_acr_pull" {
+  name                = "uai-acr-pull"
+  resource_group_name = data.azurerm_resource_group.existing.name
+  location            = data.azurerm_resource_group.existing.location
+}
+
+resource "azurerm_user_assigned_identity" "sa_blob_reader" {
+  name                = "sa-blob-reader"
+  resource_group_name = data.azurerm_resource_group.existing.name
+  location            = data.azurerm_resource_group.existing.location
+}
+
+# Role assignments
+resource "azurerm_role_assignment" "acr_pull_assignment" {
   scope                = azurerm_container_registry.acr.id
   role_definition_name = "AcrPull"
-  principal_id         = azurerm_user_assigned_identity.uai-acr-pull.principal_id
+  principal_id         = azurerm_user_assigned_identity.uai_acr_pull.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_blob_reader_assignment" {
+  scope                = data.azurerm_storage_account.existing.id
+  role_definition_name = "Storage Blob Data Reader"
+  principal_id         = azurerm_user_assigned_identity.sa_blob_reader.principal_id
 }

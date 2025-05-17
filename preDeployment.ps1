@@ -3,7 +3,6 @@ param (
   [Parameter(Mandatory = $true)][string]$location,
   [Parameter(Mandatory = $true)][string]$sqlAdminsGroupName,
   [Parameter(Mandatory = $true)][string]$storageAccountName,
-  [Parameter(Mandatory = $true)][string]$containerName,
   [Parameter(Mandatory = $true)][string]$githubSpName,
   [Parameter(Mandatory = $true)][string]$githubRepo,
   [Parameter(Mandatory = $true)][string]$mainBranch,
@@ -68,7 +67,13 @@ $accountKey = az storage account keys list `
   --query '[0].value' -o tsv
 
 az storage container create `
-  --name $containerName `
+  --name terraform-state `
+  --account-name $storageAccountName `
+  --account-key $accountKey `
+  --public-access off
+
+az storage container create `
+  --name app-configs `
   --account-name $storageAccountName `
   --account-key $accountKey `
   --public-access off

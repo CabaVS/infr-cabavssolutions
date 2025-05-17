@@ -55,7 +55,8 @@ jobs:
           echo "TF_VAR_resource_group_name=${{ secrets.TF_VAR_resource_group_name }}" >> $GITHUB_ENV
           echo "TF_VAR_sql_admin_group_display_name=${{ secrets.TF_VAR_sql_admin_group_display_name }}" >> $GITHUB_ENV
           echo "TF_VAR_sql_admin_group_object_id=${{ secrets.TF_VAR_sql_admin_group_object_id }}" >> $GITHUB_ENV
-          echo "TF_VAR_sql_admin_group_tenant_id=${{ secrets.TF_VAR_sql_admin_group_tenant_id }}" >> $GITHUB_ENV      
+          echo "TF_VAR_sql_admin_group_tenant_id=${{ secrets.TF_VAR_sql_admin_group_tenant_id }}" >> $GITHUB_ENV
+          echo "TF_VAR_storage_account_name=${{ secrets.TF_VAR_storage_account_name }}" >> $GITHUB_ENV
 
       - name: Terraform Plan
         run: terraform plan -input=false -out=tfplan
@@ -112,7 +113,8 @@ jobs:
           echo "TF_VAR_resource_group_name=${{ secrets.TF_VAR_resource_group_name }}" >> $GITHUB_ENV
           echo "TF_VAR_sql_admin_group_display_name=${{ secrets.TF_VAR_sql_admin_group_display_name }}" >> $GITHUB_ENV
           echo "TF_VAR_sql_admin_group_object_id=${{ secrets.TF_VAR_sql_admin_group_object_id }}" >> $GITHUB_ENV
-          echo "TF_VAR_sql_admin_group_tenant_id=${{ secrets.TF_VAR_sql_admin_group_tenant_id }}" >> $GITHUB_ENV      
+          echo "TF_VAR_sql_admin_group_tenant_id=${{ secrets.TF_VAR_sql_admin_group_tenant_id }}" >> $GITHUB_ENV
+          echo "TF_VAR_storage_account_name=${{ secrets.TF_VAR_storage_account_name }}" >> $GITHUB_ENV
 
       - name: Download Plan Artifact
         uses: actions/download-artifact@v4
