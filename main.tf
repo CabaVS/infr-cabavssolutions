@@ -58,7 +58,7 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
 
   identity {
     type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.uai_acr_pull.id, azurerm_user_assigned_identity.sa_blob_reader.id]
+    identity_ids = [azurerm_user_assigned_identity.uai_acr_pull.id, azurerm_user_assigned_identity.uai_sa_blob_reader.id]
   }
 
   ingress {
@@ -148,8 +148,8 @@ resource "azurerm_user_assigned_identity" "uai_acr_pull" {
   location            = data.azurerm_resource_group.existing.location
 }
 
-resource "azurerm_user_assigned_identity" "sa_blob_reader" {
-  name                = "sa-blob-reader"
+resource "azurerm_user_assigned_identity" "uai_sa_blob_reader" {
+  name                = "uai-sa-blob-reader"
   resource_group_name = data.azurerm_resource_group.existing.name
   location            = data.azurerm_resource_group.existing.location
 }
@@ -164,5 +164,5 @@ resource "azurerm_role_assignment" "acr_pull_assignment" {
 resource "azurerm_role_assignment" "sa_blob_reader_assignment" {
   scope                = data.azurerm_storage_account.existing.id
   role_definition_name = "Storage Blob Data Reader"
-  principal_id         = azurerm_user_assigned_identity.sa_blob_reader.principal_id
+  principal_id         = azurerm_user_assigned_identity.uai_sa_blob_reader.principal_id
 }
