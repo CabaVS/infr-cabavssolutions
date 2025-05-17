@@ -15,7 +15,6 @@ provider "azurerm" {
   features {}
 }
 
-variable "expensetrackerapi_image_name" {}
 variable "resource_group_name" {}
 variable "sql_admin_group_display_name" {}
 variable "sql_admin_group_object_id" {}
@@ -47,7 +46,8 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
   revision_mode                = "Single"
 
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.uai-acr-pull.id]
   }
 
   ingress {
@@ -73,6 +73,12 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
       memory = "0.5Gi"
     }
   }
+}
+
+resource "azurerm_user_assigned_identity" "uai-acr-pull" {
+  name                = "uai-acr-pull"
+  resource_group_name = data.azurerm_resource_group.existing.name
+  location            = data.azurerm_resource_group.existing.location
 }
 
 resource "azurerm_mssql_server" "mssql_server" {
@@ -116,17 +122,8 @@ resource "azurerm_container_registry" "acr" {
   admin_enabled       = false
 }
 
-data "azurerm_container_app" "aca_identity" {
-  name                = azurerm_container_app.aca_expensetrackerapi.name
-  resource_group_name = azurerm_container_app.aca_expensetrackerapi.resource_group_name
-
-  depends_on = [
-    azurerm_container_app.aca_expensetrackerapi
-  ]
-}
-
-resource "azurerm_role_assignment" "acr_pull_for_aca" {
+resource "azurerm_role_assignment" "acr_pull_for_aca_expensetrackerapi" {
   scope                = azurerm_container_registry.acr.id
   role_definition_name = "AcrPull"
-  principal_id         = data.azurerm_container_app.aca_identity.identity[0].principal_id
+  principal_id         = azurerm_user_assigned_identity.uai-acr-pull.principal_id
 }
