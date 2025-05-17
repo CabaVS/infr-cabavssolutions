@@ -62,6 +62,12 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
     }
   }
 
+  lifecycle {
+    ignore_changes = [
+      template[0].container[0].image
+    ]
+  }
+
   template {
     min_replicas = 0
     max_replicas = 1

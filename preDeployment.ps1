@@ -154,6 +154,13 @@ az role assignment create `
   --role "Contributor" `
   --scope "/subscriptions/$subId/resourceGroups/$resourceGroupName"
 
+# Assign User Access Administrator role
+Write-Host "Assigning User Access Administrator role on $resourceGroupName..."
+az role assignment create `
+  --assignee $appId `
+  --role "User Access Administrator" `
+  --scope "/subscriptions/$subId/resourceGroups/$resourceGroupName"
+
 # Assign Storage Blob Data Contributor
 Write-Host "Granting storage access to Terraform backend..."
 az role assignment create `
