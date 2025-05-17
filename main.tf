@@ -68,7 +68,7 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
 
     container {
       name   = "expensetrackerapi"
-      image  = "${azurerm_container_registry.acr.login_server}/${var.expensetrackerapi_image_name}:latest"
+      image  = "mcr.microsoft.com/dotnet/samples:aspnetapp"
       cpu    = 0.25
       memory = "0.5Gi"
     }
