@@ -68,6 +68,11 @@ resource "azurerm_container_app" "aca_expensetrackerapi" {
     ]
   }
 
+  registry {
+    server   = azurerm_container_registry.acr.login_server
+    identity = azurerm_user_assigned_identity.uai-acr-pull.id
+  }
+
   template {
     min_replicas = 0
     max_replicas = 1
